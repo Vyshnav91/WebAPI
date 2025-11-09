@@ -8,7 +8,7 @@ GET {{rootURL}}/api/books
 Accept: application/json
 
 ###
-GET {{rootURL}}/api/books/6
+GET {{rootURL}}/api/books/3
 Accept: application/json
 
 ###
@@ -16,7 +16,7 @@ Accept: application/json
 POST {{rootURL}}/api/books
 Content-Type: application/json   
 {
-  "id":6,
+  
   "title":"C# uncocked",
   "author":"nigger",
   "yearPublished":"2026"

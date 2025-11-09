@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using WebAPI.Data;
 using WebAPI.Models;
 
 namespace WebAPI.Controllers
@@ -8,27 +10,35 @@ namespace WebAPI.Controllers
     [ApiController]
     public class BooksController : ControllerBase
     {
-        static private List<Book> books = new List<Book>
-            {
+        //static private List<Book> books = new List<Book>
+        //    {
 
-             new Book { Id = 1, Author = "J.R.R. Tolkien", Title = "The Hobbit", YearPublished = 1937 },
-             new Book { Id = 2, Author = "George Orwell", Title = "1984", YearPublished = 1949 },
-             new Book { Id = 3, Author = "Harper Lee", Title = "To Kill a Mockingbird", YearPublished = 1960 },
+        //     new Book { Id = 1, Author = "J.R.R. Tolkien", Title = "The Hobbit", YearPublished = 1937 },
+        //     new Book { Id = 2, Author = "George Orwell", Title = "1984", YearPublished = 1949 },
+        //     new Book { Id = 3, Author = "Harper Lee", Title = "To Kill a Mockingbird", YearPublished = 1960 },
 
 
-            };
-        [HttpGet]
-        public ActionResult<List<Book>> GetBooks()
+        //    };
+
+        private readonly WebAPIContext _context;
+
+        public BooksController(WebAPIContext context)
         {
-            return Ok(books);
+            _context = context;
+        }
+
+        [HttpGet]
+        public async Task<ActionResult<List<Book>>> GetBooks()
+        {
+            return Ok(await _context.Books.ToListAsync());
         }
 
         [HttpGet("{id}")]
-        public ActionResult<Book> GetBookById(int id)
+        public async  Task<ActionResult<Book>> GetBookById(int id)
         {
-            var book = (from b in books
-                        where b.Id == id
-                        select b).FirstOrDefault();
+            var book = await _context.Books 
+    .AsNoTracking()
+    .SingleOrDefaultAsync(b => b.Id == id);
             if (book == null)
                 return NotFound();
 
@@ -37,13 +47,15 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost]
-        public ActionResult<Book> AddBook(Book newBook)
+        public async Task<ActionResult<Book>> AddBook(Book newBook)
         {
 
             if (newBook == null)
                 return BadRequest();
 
-            books.Add(newBook);
+            //books.Add(newBook)
+            _context.Books.Add(newBook);
+            await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetBookById), new { id = newBook.Id }, newBook);
 
@@ -51,12 +63,9 @@ namespace WebAPI.Controllers
 
         [HttpPut("{id}")]
 
-        public IActionResult UpdateBook(int id, Book updatedBook)
+        public async Task<IActionResult> UpdateBook(int id, Book updatedBook)
         {
-            var book = (from b in books
-                        where b.Id == id
-                        select b
-                         ).FirstOrDefault();
+            var book = await _context.Books.FindAsync(id);
 
             if (book == null)
                 return NotFound();
@@ -66,33 +75,32 @@ namespace WebAPI.Controllers
             book.Author = updatedBook.Author;
             book.YearPublished = updatedBook.YearPublished;
 
+            await _context.SaveChangesAsync();
+
             return NoContent();
 
 
         }
 
         [HttpDelete("{id}")]
-        public IActionResult DeleteBook(int id)
+        public async Task<IActionResult> DeleteBook(int id)
         {
-            var book = (
-                    from b in books
-                    where b.Id == id
-                    select b
-                ).FirstOrDefault();
+            var book = await _context.Books.FindAsync(id);
 
             if (book == null)
                 return NotFound();
 
-            books.Remove(book);
+
+            _context.Books.Remove(book);
+            await _context.SaveChangesAsync();
+
             return NoContent();
 
 
         }
 
 
+
+
     }
-
-
-
-
-}   
+}
